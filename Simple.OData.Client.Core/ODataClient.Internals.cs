@@ -202,8 +202,10 @@ namespace Simple.OData.Client
             var commandText = await command.GetCommandTextAsync(cancellationToken).ConfigureAwait(false);
             if (cancellationToken.IsCancellationRequested) cancellationToken.ThrowIfCancellationRequested();
 
+            var entityType = _session.Metadata.GetQualifiedTypeName(command.EntityCollection.Name);
+
             var request = await _session.Adapter.GetRequestWriter(_lazyBatchWriter)
-                .CreateActionRequestAsync(commandText, command.ActionName, command.CommandData, true).ConfigureAwait(false);
+                .CreateActionRequestAsync(commandText, command.ActionName, command.CommandData, true, entityType).ConfigureAwait(false);
 
             return await ExecuteRequestWithResultAsync(request, cancellationToken,
                 x => x.AsEntries(),
@@ -235,10 +237,10 @@ namespace Simple.OData.Client
             Func<ODataResponse, T> createResult, Func<T> createEmptyResult, Func<T> createBatchResult = null)
         {
             if (IsBatchRequest)
-                return createBatchResult != null 
-                    ? createBatchResult() 
+                return createBatchResult != null
+                    ? createBatchResult()
                     : createEmptyResult != null
-                    ? createEmptyResult() 
+                    ? createEmptyResult()
                     : default(T);
 
             try

@@ -90,7 +90,7 @@ namespace Simple.OData.Client.V4.Adapter
             return null;
         }
 
-        protected override async Task<Stream> WriteActionContentAsync(string method, string commandText, string actionName, IDictionary<string, object> parameters)
+        protected override async Task<Stream> WriteActionContentAsync(string method, string commandText, string actionName, IDictionary<string, object> parameters, string boundTypeName)
         {
             IODataRequestMessageAsync message = IsBatch
                 ? await CreateBatchOperationMessageAsync(method, null, null, commandText, true)
@@ -99,7 +99,7 @@ namespace Simple.OData.Client.V4.Adapter
             using (var messageWriter = new ODataMessageWriter(message, GetWriterSettings(), _model))
             {
                 var action = _model.SchemaElements.BestMatch(
-                    x => x.SchemaElementKind == EdmSchemaElementKind.Action,
+                    x => x.SchemaElementKind == EdmSchemaElementKind.Action && ((IEdmAction)x).Parameters.FirstOrDefault(p => p.Name == "bindingParameter")?.Type.FullName() == boundTypeName,
                     x => x.Name, actionName, _session.Pluralizer) as IEdmAction;
                 var parameterWriter = await messageWriter.CreateODataParameterWriterAsync(action).ConfigureAwait(false);
 
